@@ -40,8 +40,12 @@
             <h1>My Profile</h1>
             <div class="profile-container">
                 <div class="profile-sidebar">
-                    <div class="profile-avatar">
-                        <i class="fas fa-user-circle"></i>
+                    <div class="avatar-wrapper">
+                        <img id="profilePhoto" alt="Profile photo" class="avatar-img" src="https://i.pravatar.cc/300?u=guest">
+                        <input type="file" id="avatarInput" accept="image/*" hidden>
+                        <button class="avatar-add" id="avatarAdd" aria-label="Add/Change photo">
+                            <i class="fas fa-plus"></i>
+                        </button>
                     </div>
                     <h2 id="userName">Guest User</h2>
                     <button class="btn-logout" onclick="logout()">Logout</button>

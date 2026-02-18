@@ -110,78 +110,259 @@ const products = [
 // Store products in localStorage
 localStorage.setItem('products', JSON.stringify(products));
 
-// Slider Functionality
-let currentSlide = 0;
-const slides = document.querySelectorAll('.slide');
-const prevBtn = document.querySelector('.slider-btn.prev');
-const nextBtn = document.querySelector('.slider-btn.next');
-
-function showSlide(index) {
-    slides.forEach(slide => slide.classList.remove('active'));
-    slides[index].classList.add('active');
-}
-
-function nextSlide() {
-    currentSlide = (currentSlide + 1) % slides.length;
-    showSlide(currentSlide);
-}
-
-function prevSlide() {
-    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
-    showSlide(currentSlide);
-}
-
-nextBtn.addEventListener('click', nextSlide);
-prevBtn.addEventListener('click', prevSlide);
-
-// Auto slide every 5 seconds
-setInterval(nextSlide, 5000);
-
-// Display Products
-const productGrid = document.getElementById('productGrid');
-
-function displayProducts() {
-    productGrid.innerHTML = products.map(product => `
-        <div class="product-card" onclick="viewProduct(${product.id})">
-            <div class="product-image-wrapper">
-                <img src="${product.image}" alt="${product.name}" class="product-image">
-                <div class="product-rating">
-                    <i class="fas fa-star"></i>
-                    <span>${(Math.random() * (5 - 4) + 4).toFixed(1)}</span>
-                </div>
-            </div>
-            <div class="product-info">
-                <h3>${product.name}</h3>
-                <p>${product.description}</p>
-                <div class="product-price">₦${product.price.toLocaleString()}</div>
-            </div>
-        </div>
-    `).join('');
-}
-
+// View product function (global for onclick)
 function viewProduct(id) {
     window.location.href = `product-details.html?id=${id}`;
 }
 
-displayProducts();
+// Wait for DOM to be fully loaded before accessing elements
+document.addEventListener('DOMContentLoaded', function() {
+    const slides = document.querySelectorAll('.slide');
+    const prevBtn = document.querySelector('.slider-btn.prev');
+    const nextBtn = document.querySelector('.slider-btn.next');
+    const dotsContainer = document.querySelector('.slider-dots');
+    const hero = document.querySelector('.hero-slider');
+    
+    let currentSlide = 0;
+    let slideInterval = null;
+    let dots = [];
 
-
-// Menu Toggle
-const menuToggle = document.getElementById('menuToggle');
-const menuOverlay = document.getElementById('menuOverlay');
-const menuClose = document.getElementById('menuClose');
-
-menuToggle.addEventListener('click', () => {
-    menuOverlay.classList.add('active');
-});
-
-menuClose.addEventListener('click', () => {
-    menuOverlay.classList.remove('active');
-});
-
-// Close menu when clicking outside
-menuOverlay.addEventListener('click', (e) => {
-    if (e.target === menuOverlay) {
-        menuOverlay.classList.remove('active');
+    function showSlide(index) {
+        if (slides.length === 0) return;
+        slides.forEach(slide => slide.classList.remove('active'));
+        slides[index].classList.add('active');
+        if (dots.length) {
+            dots.forEach(d => d.classList.remove('active'));
+            dots[index].classList.add('active');
+        }
     }
+
+    function resetInterval() {
+        if (slideInterval) {
+            clearInterval(slideInterval);
+        }
+        if (slides.length > 0) {
+            slideInterval = setInterval(nextSlide, 5000);
+        }
+    }
+
+    function nextSlide() {
+        if (slides.length === 0) return;
+        currentSlide = (currentSlide + 1) % slides.length;
+        showSlide(currentSlide);
+        resetInterval();
+    }
+
+    function prevSlide() {
+        if (slides.length === 0) return;
+        currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+        showSlide(currentSlide);
+        resetInterval();
+    }
+
+    if (slides.length > 0) {
+        showSlide(0); // Set first slide as active
+        
+        if (dotsContainer) {
+            dotsContainer.innerHTML = '';
+            dots = Array.from({ length: slides.length }).map((_, i) => {
+                const b = document.createElement('button');
+                b.setAttribute('aria-label', `Go to slide ${i + 1}`);
+                b.addEventListener('click', () => {
+                    currentSlide = i;
+                    showSlide(currentSlide);
+                    resetInterval();
+                });
+                dotsContainer.appendChild(b);
+                return b;
+            });
+            if (dots[0]) dots[0].classList.add('active');
+        }
+
+        // Add event listeners only if buttons exist
+        if (nextBtn) nextBtn.addEventListener('click', nextSlide);
+        if (prevBtn) prevBtn.addEventListener('click', prevSlide);
+        
+        slideInterval = setInterval(nextSlide, 5000);
+
+        if (hero) {
+            let startX = 0;
+            let diff = 0;
+            hero.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+            }, { passive: true });
+            hero.addEventListener('touchmove', (e) => {
+                diff = e.touches[0].clientX - startX;
+            }, { passive: true });
+            hero.addEventListener('touchend', () => {
+                if (Math.abs(diff) > 40) {
+                    if (diff < 0) nextSlide();
+                    else prevSlide();
+                }
+                diff = 0;
+            });
+        }
+    }
+
+    const productGrid = document.getElementById('productGrid');
+    if (productGrid) {
+        function displayProducts() {
+            productGrid.innerHTML = products.map(product => `
+                <div class="product-card" data-id="${product.id}" onclick="viewProduct(${product.id})">
+                    <div class="product-image-wrapper">
+                        <img src="${product.image}" alt="${product.name}" class="product-image">
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i>
+                            <span>${(Math.random() * (5 - 4) + 4).toFixed(1)}</span>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <h3>${product.name}</h3>
+                        <p>${product.description}</p>
+                        <div class="product-price">₦${product.price.toLocaleString()}</div>
+                        <button class="add-to-cart" aria-label="Add ${product.name} to cart">
+                            <i class="fas fa-plus"></i> Add to Cart
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        displayProducts();
+    }
+
+    const menuToggle = document.getElementById('menuToggle');
+    const menuOverlay = document.getElementById('menuOverlay');
+    const menuClose = document.getElementById('menuClose');
+
+    if (menuToggle && menuOverlay && menuClose) {
+        menuToggle.addEventListener('click', () => {
+            menuOverlay.classList.add('active');
+        });
+
+        menuClose.addEventListener('click', () => {
+            menuOverlay.classList.remove('active');
+        });
+
+        // Close menu when clicking outside
+        menuOverlay.addEventListener('click', (e) => {
+            if (e.target === menuOverlay) {
+                menuOverlay.classList.remove('active');
+            }
+        });
+    }
+
+    const themeToggle = document.getElementById('themeToggle');
+    function applyTheme(theme) {
+        if (theme === 'dark') {
+            document.body.classList.add('dark-theme');
+            if (themeToggle) themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        } else {
+            document.body.classList.remove('dark-theme');
+            if (themeToggle) themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+        }
+    }
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    applyTheme(savedTheme);
+    if (themeToggle) {
+        themeToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            const newTheme = document.body.classList.contains('dark-theme') ? 'light' : 'dark';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        });
+    }
+
+    const revealEls = document.querySelectorAll('.reveal, .product-card');
+    if (revealEls.length) {
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    io.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15 });
+        revealEls.forEach(el => io.observe(el));
+    }
+
+    const cartCountEl = document.querySelector('.cart-count');
+    const cartIconEl = document.querySelector('.cart-icon');
+    function getCart() {
+        try { return JSON.parse(localStorage.getItem('cart') || '[]'); } catch { return []; }
+    }
+    function saveCart(cart) {
+        localStorage.setItem('cart', JSON.stringify(cart));
+    }
+    function updateCartCount() {
+        const count = getCart().reduce((acc, item) => acc + (item.qty || 1), 0);
+        if (cartCountEl) cartCountEl.textContent = String(count);
+    }
+    updateCartCount();
+
+    function flyToCart(fromImg) {
+        if (!fromImg || !cartIconEl) return;
+        const imgRect = fromImg.getBoundingClientRect();
+        const iconRect = cartIconEl.getBoundingClientRect();
+        const clone = fromImg.cloneNode(true);
+        clone.style.position = 'fixed';
+        clone.style.left = imgRect.left + 'px';
+        clone.style.top = imgRect.top + 'px';
+        clone.style.width = imgRect.width + 'px';
+        clone.style.height = imgRect.height + 'px';
+        clone.style.borderRadius = '12px';
+        clone.style.zIndex = '3000';
+        clone.style.transition = 'transform 600ms ease, opacity 600ms ease';
+        document.body.appendChild(clone);
+        const dx = iconRect.left - imgRect.left;
+        const dy = iconRect.top - imgRect.top;
+        const scale = 0.1;
+        requestAnimationFrame(() => {
+            clone.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+            clone.style.opacity = '0.4';
+        });
+        setTimeout(() => {
+            clone.remove();
+            cartIconEl.style.transform = 'scale(1.1)';
+            setTimeout(() => { cartIconEl.style.transform = ''; }, 120);
+        }, 650);
+    }
+
+    if (productGrid) {
+        productGrid.addEventListener('click', (e) => {
+            const btn = e.target.closest('.add-to-cart');
+            if (!btn) return;
+            e.stopPropagation();
+            const card = btn.closest('.product-card');
+            const id = Number(card?.getAttribute('data-id'));
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            const cart = getCart();
+            const existing = cart.find(i => i.id === id);
+            if (existing) existing.qty = (existing.qty || 1) + 1;
+            else cart.push({ id: product.id, name: product.name, price: product.price, image: product.image, qty: 1 });
+            saveCart(cart);
+            updateCartCount();
+            const img = card.querySelector('.product-image');
+            flyToCart(img);
+        });
+    }
+
+    if (productGrid) {
+        productGrid.addEventListener('mousemove', (e) => {
+            const card = e.target.closest('.product-card');
+            if (!card) return;
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const rotateY = ((x / rect.width) - 0.5) * 8;
+            const rotateX = ((y / rect.height) - 0.5) * -8;
+            card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-6px)`;
+        });
+        productGrid.addEventListener('mouseleave', (e) => {
+            const card = e.target.closest('.product-card');
+            if (!card) return;
+            card.style.transform = '';
+        });
+    }
+
 });

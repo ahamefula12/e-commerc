@@ -1,14 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="0; url=html/splash.html">
-    <title>Redirecting...</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="refresh" content="0; url=/html/index.html">
+  <title>Redirecting…</title>
 </head>
 <body>
-    <script>
-        window.location.href = 'html/splash.html';
-    </script>
+  <script>
+    (function () {
+      var target = '/html/index.html';
+      if (location.pathname && !location.pathname.endsWith('/')) {
+        target = location.pathname.replace(/\/?$/, '/html/index.html');
+      }
+      location.replace(target);
+    })();
+  </script>
+  <p>Redirecting to the site… <a href="/html/index.html">Continue</a></p>
 </body>
 </html>
